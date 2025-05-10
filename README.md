@@ -22,14 +22,8 @@ This project simulates the data platform of an insurance company that sells poli
 
 This solution follows the **Medallion Architecture** to implement a scalable **Data Lakehouse** on Azure.
 
-### 🧩 Data Flow
 
-
-
-
-
-
-
+![Architecture Diagram](docs/SmartPolicyDataLakehouse.jpg)
 
 ---
 
@@ -37,7 +31,7 @@ This solution follows the **Medallion Architecture** to implement a scalable **D
 
 | Layer           | Tools / Services                                      |
 |-----------------|--------------------------------------------------------|
-| **Sources**     | Azure SQL DB, REST API, JSON, CSV                     |
+| **Sources**     | Azure SQL DB, REST API, JSON, CSV(GitHub)              |
 | **Ingestion**   | Azure Data Factory                                    |
 | **Processing**  | Azure Databricks (PySpark), Delta Lake (Bronze/Silver/Gold) |
 | **Storage**     | ADLS Gen2, Delta Tables                               |
@@ -61,20 +55,8 @@ This solution follows the **Medallion Architecture** to implement a scalable **D
 ## ✅ Key Features
 
 - Modular pipeline with Bronze → Silver → Gold layers
-- Unified batch and stream-compatible architecture
-- Customer segmentation logic using PySpark
-- Power BI dashboard for business reporting
+- Unified batch architecture
+- Customer segmentation and total claims, Summary of Company sales,  logic using PySpark
 - Secure secret handling via Key Vault
 - CI/CD with Azure DevOps for pipeline deployment
 
----
-
-## 🚀 Getting Started
-
-1. Clone this repository
-2. Upload data samples to your own ADLS Gen2 account
-3. Deploy linked services and pipelines in ADF
-4. Run notebooks in Databricks (Bronze > Silver > Gold)
-5. Connect Power BI to Gold Delta tables via Serverless SQL or direct access
-
-> 🔐 Make sure to set up Azure Key Vault with secrets for DB/API access.
