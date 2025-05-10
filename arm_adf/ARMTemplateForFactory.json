@@ -1,0 +1,1386 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-inspolicy-dev"
+        },
+        "lnk_ADLS_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'lnk_ADLS'"
+        },
+        "lnk_ADLS_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://sainsuranceadls.dfs.core.windows.net/"
+        },
+        "lnk_SQL_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "inspolicy-sqlserver.database.windows.net"
+        },
+        "lnk_SQL_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "adb-inspolicy"
+        },
+        "lnk_SQL_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "azureuser"
+        },
+        "lnk_git_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/"
+        },
+        "lnkazurekeyvault_properties_typeProperties_baseUrl": {
+            "type": "string",
+            "defaultValue": "https://kv-inspolicy.vault.azure.net/"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/BronzeLayer_Notebook_Procedure')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "AgentData-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/bronzelayer_implementation/AgentData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "BranchData-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "AgentData-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/bronzelayer_implementation/BranchData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "ClaimsData-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "BranchData-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/bronzelayer_implementation/ClaimData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "CustomerData-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "ClaimsData-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/bronzelayer_implementation/CustomerData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "PolicyData-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "CustomerData-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/bronzelayer_implementation/PolicyData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-09T11:10:19Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_databricks')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/GoldLayer_Notebook_Procedure')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Gold Layer Aggregiate",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/goldlayer_load/GoldLayer-DataLoad"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-09T11:10:19Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_databricks')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Incremental-Ingest Agent Data')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Get FromDate HW",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "ADLS_CSV",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "folderName": "HighWaterMark",
+                                    "fileName": "HighWaterMark_Agent.txt"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Extract Agent Data to ADLS",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Get FromDate HW",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            },
+                            {
+                                "activity": "Get ToDate Agent Table",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "select *\nfrom [dbo].[Agent]\nwhere 1=1\nand create_timestamp > cast('@{activity('Get FromDate HW').output.firstRow.Prop_0}' as datetime)\nand create_timestamp <= cast('@{activity('Get ToDate Agent Table').output.firstRow.last_modified_date}' as datetime2)",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "mappings": [
+                                    {
+                                        "source": {
+                                            "name": "agent_id",
+                                            "type": "Int32",
+                                            "physicalType": "int"
+                                        },
+                                        "sink": {
+                                            "name": "agent_id",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "name": "agent_name",
+                                            "type": "String",
+                                            "physicalType": "varchar"
+                                        },
+                                        "sink": {
+                                            "name": "agent_name",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "name": "agent_email",
+                                            "type": "String",
+                                            "physicalType": "varchar"
+                                        },
+                                        "sink": {
+                                            "name": "agent_email",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "name": "agent_phone",
+                                            "type": "String",
+                                            "physicalType": "varchar"
+                                        },
+                                        "sink": {
+                                            "name": "agent_phone",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "name": "branch_id",
+                                            "type": "Int32",
+                                            "physicalType": "int"
+                                        },
+                                        "sink": {
+                                            "name": "branch_id",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "name": "create_timestamp",
+                                            "type": "DateTime",
+                                            "physicalType": "datetime"
+                                        },
+                                        "sink": {
+                                            "name": "create_timestamp",
+                                            "type": "String",
+                                            "physicalType": "String"
+                                        }
+                                    }
+                                ],
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Agent"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_PARQUET",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "Path": "AgentData"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Get ToDate Agent Table",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select max(create_timestamp) as last_modified_date\nfrom [dbo].[Agent]",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Agent"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Update Agent HW",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Extract Agent Data to ADLS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "select '@{activity('Get ToDate Agent Table').output.firstRow.last_modified_date}'",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Agent"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_CSV",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "folderName": "AgentData",
+                                    "fileName": "HighWaterMark_Agent.txt"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-08T06:05:45Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ADLS_CSV')]",
+                "[concat(variables('factoryId'), '/datasets/DS_SQL_GENERIC')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_PARQUET')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Incremental-Ingest Claim Data')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Get FromDate HW",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "ADLS_CSV",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "folderName": "HighWaterMark",
+                                    "fileName": "HighWaterMark_Claim.txt"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Get ToDate DB",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select max(LastUpdatedTimeStamp) as LastUpdatedTimeStamp\nfrom [dbo].[Claim]",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Claim"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Extract ClaimData to ADLS",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Get FromDate HW",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            },
+                            {
+                                "activity": "Get ToDate DB",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "select *\nfrom [dbo].[Claim]\nwhere 1=1\nand LastUpdatedTimeStamp > '@{activity('Get FromDate HW').output.firstRow.Prop_0}'\nand LastUpdatedTimeStamp <= cast('@{activity('Get ToDate DB').output.firstRow.LastUpdatedTimeStamp}' as datetime2)",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Claim"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_PARQUET",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "Path": "ClaimData"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Update Claim HW",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Extract ClaimData to ADLS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "select '@{activity('Get ToDate DB').output.firstRow.LastUpdatedTimeStamp}'",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Claim"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_CSV",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "folderName": "ClaimData",
+                                    "fileName": "HighWaterMark_Claim.txt"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-08T06:05:59Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ADLS_CSV')]",
+                "[concat(variables('factoryId'), '/datasets/DS_SQL_GENERIC')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_PARQUET')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Ingest_BranchData_ADLS')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy Data from Branch to ADLS",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_SQL_GENERIC",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "Branch"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_PARQUET",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "Path": "BranchData"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-06T12:09:01Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/DS_SQL_GENERIC')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_PARQUET')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Silverlayer_Notebook_Procedure')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Agent-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/silverlayer_dataload/AgentData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "Branch-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "Agent-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/silverlayer_dataload/BranchData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "Claim-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "Branch-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/silverlayer_dataload/ClaimData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "Customer-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "Claim-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/silverlayer_dataload/CustomerData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "Policy-Ingestion",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "Customer-Ingestion",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Users/jeromedayrit@outlook.com/silverlayer_dataload/PolicyData-Ingestion"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "lnk_databricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-09T11:10:19Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_databricks')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_CSV')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "lnk_ADLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "folderName": {
+                        "type": "string"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@dataset().fileName",
+                            "type": "Expression"
+                        },
+                        "folderPath": {
+                            "value": "@dataset().folderName",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "landing"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": false,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "customer_id",
+                        "type": "String"
+                    },
+                    {
+                        "name": "first_name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "last_name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "email",
+                        "type": "String"
+                    },
+                    {
+                        "name": "phone",
+                        "type": "String"
+                    },
+                    {
+                        "name": "country",
+                        "type": "String"
+                    },
+                    {
+                        "name": "city",
+                        "type": "String"
+                    },
+                    {
+                        "name": "registration_date",
+                        "type": "String"
+                    },
+                    {
+                        "name": "date_of_birth",
+                        "type": "String"
+                    },
+                    {
+                        "name": "gender",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_ADLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_PARQUET')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "lnk_ADLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "Path": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@dataset().Path",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "landing"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_ADLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_SQL_GENERIC')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "lnk_SQL",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "tableName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": {
+                        "value": "@dataset().tableName",
+                        "type": "Expression"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnk_SQL')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/lnk_ADLS')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('lnk_ADLS_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('lnk_ADLS_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/lnk_SQL')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "server": "[parameters('lnk_SQL_properties_typeProperties_server')]",
+                    "database": "[parameters('lnk_SQL_properties_typeProperties_database')]",
+                    "encrypt": "mandatory",
+                    "trustServerCertificate": false,
+                    "authenticationType": "SQL",
+                    "userName": "[parameters('lnk_SQL_properties_typeProperties_userName')]",
+                    "password": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "lnkazurekeyvault",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "sql-pass",
+                        "secretVersion": "fb9f46a7b83d467ea989a38579dc0795"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnkazurekeyvault')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/lnk_databricks')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureDatabricks",
+                "typeProperties": {
+                    "domain": "https://adb-230587316380934.14.azuredatabricks.net",
+                    "accessToken": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "lnkazurekeyvault",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "databricks-token"
+                    },
+                    "newClusterNodeType": "Standard_DS3_v2",
+                    "newClusterNumOfWorker": "1",
+                    "newClusterSparkEnvVars": {
+                        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+                    },
+                    "newClusterVersion": "15.4.x-photon-scala2.12",
+                    "clusterOption": "Fixed",
+                    "newClusterInitScripts": []
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/lnkazurekeyvault')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/lnk_git')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('lnk_git_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/lnkazurekeyvault')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureKeyVault",
+                "typeProperties": {
+                    "baseUrl": "[parameters('lnkazurekeyvault_properties_typeProperties_baseUrl')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/trg_daily_1230AM')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "BronzeLayer_Notebook_Procedure",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-05-09T11:11:00",
+                        "timeZone": "Singapore Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                30
+                            ],
+                            "hours": [
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/BronzeLayer_Notebook_Procedure')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/trg_daily_2AM')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "GoldLayer_Notebook_Procedure",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-05-09T10:58:00",
+                        "timeZone": "Singapore Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                2
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/GoldLayer_Notebook_Procedure')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/trg_daily_once_01AM')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Silverlayer_Notebook_Procedure",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-05-09T10:48:00",
+                        "timeZone": "Singapore Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                1
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/Silverlayer_Notebook_Procedure')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/trg_daily_once_12am')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Incremental-Ingest Agent Data",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    },
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Incremental-Ingest Claim Data",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    },
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Ingest_BranchData_ADLS",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-05-09T00:00:00",
+                        "timeZone": "Singapore Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/Incremental-Ingest Agent Data')]",
+                "[concat(variables('factoryId'), '/pipelines/Incremental-Ingest Claim Data')]",
+                "[concat(variables('factoryId'), '/pipelines/Ingest_BranchData_ADLS')]"
+            ]
+        }
+    ]
+}

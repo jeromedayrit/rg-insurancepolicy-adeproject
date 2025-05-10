@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "adf-inspolicy-dev"
+        },
+        "lnk_ADLS_accountKey": {
+            "value": ""
+        },
+        "lnk_ADLS_properties_typeProperties_url": {
+            "value": "https://sainsuranceadls.dfs.core.windows.net/"
+        },
+        "lnk_SQL_properties_typeProperties_server": {
+            "value": "inspolicy-sqlserver.database.windows.net"
+        },
+        "lnk_SQL_properties_typeProperties_database": {
+            "value": "adb-inspolicy"
+        },
+        "lnk_SQL_properties_typeProperties_userName": {
+            "value": "azureuser"
+        },
+        "lnk_git_properties_typeProperties_url": {
+            "value": "https://raw.githubusercontent.com/"
+        },
+        "lnkazurekeyvault_properties_typeProperties_baseUrl": {
+            "value": "https://kv-inspolicy.vault.azure.net/"
+        }
+    }
+}
